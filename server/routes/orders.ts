@@ -13,6 +13,7 @@ router.post('/', async (req, res) => {
     address_line1,
     address_line2,
     zip_code,
+    notes,
     items, // Array<{ variant_id: string, quantity: number }>
   } = req.body as {
     customer_name: string;
@@ -23,6 +24,7 @@ router.post('/', async (req, res) => {
     address_line1: string;
     address_line2?: string;
     zip_code?: string;
+    notes?: string;
     items: Array<{ variant_id: string; quantity: number }>;
   };
 
@@ -80,6 +82,7 @@ router.post('/', async (req, res) => {
       address_line1,
       address_line2,
       zip_code,
+      notes,
       total_amount,
       status: 'pending',
     })

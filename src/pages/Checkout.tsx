@@ -70,14 +70,14 @@ export default function Checkout() {
   };
 
   const inputClass =
-    'w-full bg-bg border border-border px-4 py-3 font-sans text-sm text-white placeholder-[#333] focus:border-accent focus:outline-none transition-colors';
+    'w-full bg-white border border-border px-4 py-3 font-sans text-sm text-dark placeholder-stone focus:border-accent focus:outline-none transition-colors rounded-xl';
 
   return (
     <>
       <SEOHead title="Checkout — ARCADA" description="Complete your ARCADA order." />
 
       <div className="max-w-6xl mx-auto px-4 py-12 pt-[88px]">
-        <h1 className="font-display font-light text-white uppercase text-4xl tracking-[0.15em] mb-12">
+        <h1 className="font-display font-light text-dark uppercase text-4xl tracking-[0.15em] mb-12">
           {t('checkout.title')}
         </h1>
 
@@ -199,7 +199,7 @@ export default function Checkout() {
           {/* Order Summary */}
           <div>
             <div className="bg-white border border-border p-6 rounded-2xl">
-              <h2 className="font-display font-bold text-white uppercase tracking-[0.15em] text-lg mb-6 border-b border-border pb-4">
+              <h2 className="font-display font-bold text-dark uppercase tracking-[0.15em] text-lg mb-6 border-b border-border pb-4">
                 {t('checkout.orderSummary')}
               </h2>
 
@@ -221,7 +221,7 @@ export default function Checkout() {
                       className="flex justify-between items-start gap-4"
                     >
                       <div className="flex-1">
-                        <p className="font-display font-bold text-white text-sm uppercase">
+                        <p className="font-display font-bold text-dark text-sm uppercase">
                           {name}
                         </p>
                         {variantName && (
@@ -233,8 +233,8 @@ export default function Checkout() {
                           ×{item.quantity}
                         </p>
                       </div>
-                      <span className="font-sans text-white text-sm">
-                        ${(price * item.quantity).toFixed(2)}
+                      <span className="font-sans text-dark text-sm">
+                        {(price * item.quantity).toLocaleString()} DZD
                       </span>
                     </div>
                   );
@@ -245,8 +245,8 @@ export default function Checkout() {
                 <span className="font-sans text-muted uppercase tracking-[0.15em] text-sm">
                   {t('cart.total')}
                 </span>
-                <span className="font-sans text-white font-bold text-xl">
-                  ${totalAmount().toFixed(2)}
+                <span className="font-sans text-dark font-bold text-xl">
+                  {totalAmount().toLocaleString()} DZD
                 </span>
               </div>
             </div>
