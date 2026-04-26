@@ -1,0 +1,24 @@
+-- ══════════════════════════════════════════════════════════════════════════════
+-- ARCADA — Fix "Could not find the table in the schema cache" error
+-- ══════════════════════════════════════════════════════════════════════════════
+--
+-- If you see errors like:
+--   "Could not find the table 'public.messages' in the schema cache"
+--   "Could not find the table 'public.newsletter_subscriptions' in the schema cache"
+--
+-- The tables DO NOT EXIST yet. The pg_notify below cannot fix missing tables.
+--
+-- ┌──────────────────────────────────────────────────────────────────────────┐
+-- │  STEP 1 — Create the tables first                                        │
+-- │                                                                          │
+-- │  Go to: Supabase Dashboard → SQL Editor                                  │
+-- │  Open the file:  supabase/features.sql                                   │
+-- │  Copy the entire contents → paste → click Run                            │
+-- │                                                                          │
+-- │  This creates: messages, newsletter_subscriptions, page_visits tables    │
+-- │  with the correct columns and RLS policies.                              │
+-- └──────────────────────────────────────────────────────────────────────────┘
+--
+-- STEP 2 — Then run this to refresh the PostgREST schema cache:
+
+SELECT pg_notify('pgrst', 'reload schema');
