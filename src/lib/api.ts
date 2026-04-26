@@ -171,18 +171,22 @@ export const api = {
       const variantIds = items.map((i) => i.variant_id);
       const { data: variants, error: varErr } = await supabase
         .from('product_variants')
-        .select('id, price_modifier, products(base_price)')
+        .select('id, product_id, name_en, price_modifier, products(base_price, name_en)')
         .in('id', variantIds);
       if (varErr) throw new Error(varErr.message);
 
-      const priceMap: Record<string, number> = {};
+      const variantMap: Record<string, { unit_price: number; product_id: string | null; product_name_en: string }> = {};
       for (const v of variants ?? []) {
         const base = (v as any).products?.base_price ?? 0;
-        priceMap[v.id] = base + v.price_modifier;
+        variantMap[v.id] = {
+          unit_price: base + v.price_modifier,
+          product_id: (v as any).product_id ?? null,
+          product_name_en: (v as any).products?.name_en ?? (v as any).name_en ?? 'Product',
+        };
       }
 
       const total_amount = items.reduce(
-        (sum, i) => sum + (priceMap[i.variant_id] ?? 0) * i.quantity,
+        (sum, i) => sum + ((variantMap[i.variant_id]?.unit_price ?? 0) * i.quantity),
         0
       );
 
@@ -196,9 +200,12 @@ export const api = {
 
       const orderItems = items.map((i) => ({
         order_id: order.id,
+        product_id: variantMap[i.variant_id]?.product_id,
         variant_id: i.variant_id,
+        product_name_en: variantMap[i.variant_id]?.product_name_en ?? 'Product',
+        variant_name_en: (variants ?? []).find((v) => v.id === i.variant_id)?.name_en ?? null,
         quantity: i.quantity,
-        unit_price: priceMap[i.variant_id] ?? 0,
+        unit_price: variantMap[i.variant_id]?.unit_price ?? 0,
       }));
       const { error: itemsErr } = await supabase.from('order_items').insert(orderItems);
       if (itemsErr) throw new Error(itemsErr.message);

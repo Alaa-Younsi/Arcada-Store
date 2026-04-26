@@ -227,6 +227,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       address_line1: string;
       address_line2?: string;
       zip_code?: string;
+      notes?: string;
       items: Array<{ variant_id: string; quantity: number }>;
     };
 
@@ -234,10 +235,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: variants, error: varErr } = await db
       .from('product_variants')
-      .select('id, sku, stock, price_modifier, product:products(id, base_price, name_en)')
+      .select('id, sku, stock, price_modifier, name_en, product_id')
       .in('id', items.map((i) => i.variant_id));
 
     if (varErr || !variants) return res.status(500).json({ error: 'Failed to fetch variants' });
+
+    const productIds = Array.from(new Set(variants.map((v) => v.product_id).filter(Boolean)));
+    const { data: products, error: productsErr } = await db
+      .from('products')
+      .select('id, base_price, name_en')
+      .in('id', productIds);
+    if (productsErr || !products) return res.status(500).json({ error: 'Failed to fetch products' });
+
+    const productsById = new Map(products.map((p) => [p.id, p]));
+    const missingProductVariant = variants.find((v) => !productsById.has(v.product_id));
+    if (missingProductVariant) {
+      return res.status(400).json({ error: `Missing product for variant ${missingProductVariant.id}` });
+    }
 
     for (const item of items) {
       const variant = variants.find((v) => v.id === item.variant_id);
@@ -249,9 +263,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const orderItems = items.map((item) => {
       const variant = variants.find((v) => v.id === item.variant_id)!;
-      const product = variant.product as unknown as { id: string; base_price: number; name_en: string };
+      const product = productsById.get(variant.product_id)!;
       const unit_price = product.base_price + ((variant.price_modifier as number) ?? 0);
-      return { product_id: product.id, variant_id: item.variant_id, quantity: item.quantity, unit_price, product_name_en: product.name_en };
+      return {
+        product_id: product.id,
+        variant_id: item.variant_id,
+        quantity: item.quantity,
+        unit_price,
+        product_name_en: product.name_en || variant.name_en || 'Product',
+        variant_name_en: variant.name_en,
+      };
     });
 
     const total_amount = orderItems.reduce((s, i) => s + i.unit_price * i.quantity, 0);
@@ -259,7 +280,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const { data: order, error: orderErr } = await db
       .from('orders')
-      .insert({ order_number, customer_name, customer_email, customer_phone, country, city, address_line1, address_line2, zip_code, total_amount, status: 'pending' })
+      .insert({ order_number, customer_name, customer_email, customer_phone, country, city, address_line1, address_line2, zip_code, notes, total_amount, status: 'pending' })
       .select()
       .single();
     if (orderErr || !order) return res.status(500).json({ error: 'Failed to create order' });
