@@ -236,6 +236,8 @@ export default function Home() {
         description="Découvrez les collections ARCADA, surfaces en céramique de prestige pour l'architecture et le design d'intérieur."
       />
 
+      <div className="overflow-x-hidden">
+
       {/* ══════════════════════════════════════════════════
           1. HERO — full-bleed 100vh
       ══════════════════════════════════════════════════ */}
@@ -304,7 +306,7 @@ export default function Home() {
         </div>
 
         {/* Bottom-right: scroll indicator + play/pause */}
-        <div className="absolute bottom-8 right-8 md:right-16 flex flex-col items-center gap-4 z-10">
+        <div className="absolute bottom-8 right-4 sm:right-8 md:right-16 hidden sm:flex flex-col items-center gap-4 z-10">
           <button
             onClick={togglePlay}
             aria-label={isPlaying ? 'Pause video' : 'Play video'}
@@ -823,6 +825,8 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      </div>
     </>
   );
 }

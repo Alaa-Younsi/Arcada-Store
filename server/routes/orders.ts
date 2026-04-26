@@ -36,11 +36,27 @@ router.post('/', async (req, res) => {
   const variantIds = items.map((i) => i.variant_id);
   const { data: variants, error: varErr } = await supabase
     .from('product_variants')
-    .select('id, sku, stock, price_modifier, product:products(id, base_price, name_en)')
+    .select('id, sku, stock, price_modifier, name_en, product_id')
     .in('id', variantIds);
 
   if (varErr || !variants) {
     return res.status(500).json({ error: 'Failed to fetch variants' });
+  }
+
+  const productIds = Array.from(new Set(variants.map((v) => v.product_id).filter(Boolean)));
+  const { data: products, error: productsErr } = await supabase
+    .from('products')
+    .select('id, base_price, name_en')
+    .in('id', productIds);
+
+  if (productsErr || !products) {
+    return res.status(500).json({ error: 'Failed to fetch products' });
+  }
+
+  const productsById = new Map(products.map((p) => [p.id, p]));
+  const missingProductVariant = variants.find((v) => !productsById.has(v.product_id));
+  if (missingProductVariant) {
+    return res.status(400).json({ error: `Missing product for variant ${missingProductVariant.id}` });
   }
 
   // Validate stock
@@ -55,14 +71,15 @@ router.post('/', async (req, res) => {
   // Compute total
   const orderItems = items.map((item) => {
     const variant = variants.find((v) => v.id === item.variant_id)!;
-    const product = variant.product as { id: string; base_price: number; name_en: string };
+    const product = productsById.get(variant.product_id)!;
     const unit_price = product.base_price + (variant.price_modifier ?? 0);
     return {
       product_id: product.id,
       variant_id: item.variant_id,
       quantity: item.quantity,
       unit_price,
-      product_name_en: product.name_en,
+      product_name_en: product.name_en || variant.name_en || 'Product',
+      variant_name_en: variant.name_en,
     };
   });
 
